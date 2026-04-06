@@ -1,0 +1,172 @@
+# 🔎 Busca Sequencial Indexada em C
+
+Este projeto implementa o algoritmo de **Busca Sequencial Indexada** utilizando a linguagem C, com foco em eficiência e análise de desempenho sobre um dataset real de filmes.
+
+---
+
+## 📁 Estrutura do Projeto
+
+* `busca_indexada.c` → implementação completa do algoritmo
+* `movies_ordenado.txt` → base de dados utilizada
+
+---
+
+## 📥 Importação do Dataset
+
+Os dados são carregados a partir de um arquivo texto contendo os nomes dos filmes, um por linha.
+
+A leitura é feita utilizando `fgets`, armazenando cada linha em um vetor de structs:
+
+```c
+while (fgets(filmes[n].nome, TAM_NOME, fp)) {
+    filmes[n].nome[strcspn(filmes[n].nome, "\r\n")] = 0;
+    n++;
+}
+```
+
+### 🔧 Tratamento realizado
+
+* Remoção de `\n` e `\r` para evitar problemas na comparação de strings
+* Controle de limite do vetor (`MAX`)
+
+---
+
+## ⚠️ Ordenação do Dataset
+
+Embora o arquivo original seja chamado de "ordenado", foi identificado que ele **não está corretamente ordenado segundo o critério do `strcmp`** da linguagem C.
+
+Exemplo de inconsistência:
+
+```
+"$50K..." aparece antes de "$5 a Day"
+```
+
+Por isso, foi necessário aplicar uma ordenação explícita no código:
+
+```c
+qsort(filmes, n, sizeof(Filme), comparar);
+```
+
+Utilizando:
+
+```c
+int comparar(const void *a, const void *b) {
+    return strcmp(((Filme*)a)->nome, ((Filme*)b)->nome);
+}
+```
+
+Essa etapa é essencial, pois a busca indexada depende de um vetor totalmente ordenado.
+
+---
+
+## 🧱 Criação do Índice
+
+A indexação é feita dividindo o vetor em blocos de tamanho aproximadamente √n.
+
+```c
+int tamanho_bloco = (int) sqrt(n);
+```
+
+Para cada bloco, é armazenado:
+
+* a **chave** (primeiro elemento do bloco)
+* a **posição** inicial no vetor
+
+```c
+for (int i = 0; i < n; i += tamanho_bloco) {
+    strcpy(indice[j].chave, filmes[i].nome);
+    indice[j].posicao = i;
+    j++;
+}
+```
+
+Isso reduz significativamente o espaço de busca.
+
+---
+
+## 🔎 Funcionamento da Busca
+
+A busca ocorre em duas etapas:
+
+### 1. Localização do bloco
+
+```c
+while (i < num_indices - 1 && strcmp(indice[i + 1].chave, chave_busca) <= 0) {
+    i++;
+}
+```
+
+Essa etapa identifica o bloco onde a busca deve começar.
+
+---
+
+### 2. Busca sequencial no bloco
+
+```c
+for (int j = inicio; j < fim; j++) {
+    int cmp = strcmp(filmes[j].nome, chave_busca);
+
+    if (cmp == 0) return j;
+    if (cmp > 0) return -1;
+}
+```
+
+A ordenação permite interromper a busca antecipadamente.
+
+---
+
+## 📊 Medição de Desempenho
+
+O desempenho do algoritmo é medido através do **número de comparações realizadas**, utilizando uma variável global:
+
+```c
+long long comparacoes = 0;
+```
+
+Essa variável é incrementada sempre que ocorre uma comparação relevante:
+
+```c
+comparacoes++;
+```
+
+### Onde as comparações são contadas
+
+* Durante a ordenação (`qsort`)
+* Durante a busca no índice
+* Durante a busca dentro do bloco
+
+---
+
+## 📌 Por que usar número de comparações?
+
+A contagem de comparações é uma forma mais precisa e confiável de medir desempenho do que tempo de execução, pois:
+
+* Independe do hardware utilizado
+* Independe de processos do sistema operacional
+* Permite comparação justa entre diferentes algoritmos
+* É o método mais utilizado em análise de algoritmos
+
+---
+
+## ⚖️ Comparação entre algoritmos
+
+Para garantir uma análise justa:
+
+* Todos os algoritmos do projeto utilizam o **mesmo critério de medição (comparações)**
+* A mesma base de dados é utilizada
+* As mesmas condições de entrada são mantidas
+
+---
+
+## 🚀 Considerações Finais
+
+A busca sequencial indexada oferece:
+
+* Melhor desempenho que a busca sequencial simples
+* Implementação relativamente simples
+* Boa eficiência para grandes volumes de dados
+
+No entanto:
+
+* Depende de ordenação prévia
+* Ainda pode ser menos eficiente que busca binária em alguns cenários

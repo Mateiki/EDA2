@@ -6,6 +6,9 @@
 #define MAX 100606
 #define TAM_NOME 200
 
+// CONTADOR DE COMPARAÇÕES
+long long comparacoes = 0;
+
 // STRUCTS
 
 typedef struct {
@@ -20,6 +23,7 @@ typedef struct {
 // COMPARADOR PARA ORDENAÇÃO
 
 int comparar(const void *a, const void *b) {
+    comparacoes++; // conta comparação da ordenação
     return strcmp(((Filme*)a)->nome, ((Filme*)b)->nome);
 }
 
@@ -48,12 +52,17 @@ int buscaIndexada(Filme filmes[], int n, Indice indice[], int num_indices, char 
 
     int i = 0;
 
-    // encontra bloco inicial
-    while (i < num_indices - 1 && strcmp(indice[i + 1].chave, chave_busca) <= 0) {
-        i++;
+    // busca no índice
+    while (i < num_indices - 1) {
+        comparacoes++;
+        if (strcmp(indice[i + 1].chave, chave_busca) <= 0) {
+            i++;
+        } else {
+            break;
+        }
     }
 
-    // busca sequencial a partir do bloco
+    // busca no bloco
     for (int b = i; b < num_indices; b++) {
 
         int inicio = indice[b].posicao;
@@ -61,6 +70,7 @@ int buscaIndexada(Filme filmes[], int n, Indice indice[], int num_indices, char 
 
         for (int j = inicio; j < fim; j++) {
 
+            comparacoes++;
             int cmp = strcmp(filmes[j].nome, chave_busca);
 
             if (cmp == 0) {
@@ -107,8 +117,14 @@ int main() {
 
     printf("Total de filmes carregados: %d\n", n);
 
-    // ordenação correta
+    // resetar contador antes da ordenação
+    comparacoes = 0;
+
+    // ordenação
     qsort(filmes, n, sizeof(Filme), comparar);
+
+    // resetar para medir só a busca
+    comparacoes = 0;
 
     // tamanho do bloco
     int tamanho_bloco = (int) sqrt(n);
@@ -123,7 +139,6 @@ int main() {
     char busca[TAM_NOME];
     printf("\nDigite o nome do filme: ");
     fgets(busca, TAM_NOME, stdin);
-
     busca[strcspn(busca, "\r\n")] = 0;
 
     // busca
@@ -137,6 +152,8 @@ int main() {
     } else {
         printf("\nFilme nao encontrado.\n");
     }
+
+    printf("Comparacoes na busca: %lld\n", comparacoes);
 
     free(indice);
     free(filmes);

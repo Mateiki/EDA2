@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #define MAX_FILMES 101606
 #define TAM_BUFFER 256
@@ -55,33 +54,25 @@ int main() {
     int encontrado = 0;
     int posicao = -1;
 
-    long long comparacoes = 0;   // contador de comparações
-    volatile int dummy = 0;      // evita otimização do compilador
-
-    clock_t inicio, fim;
-
-    inicio = clock();
+    long long comparacoes = 0;
+    volatile int dummy = 0;
 
     for (int k = 0; k < REPETICOES; k++) {
         for (int j = 0; j < total_filmes; j++) {
 
-            comparacoes++; // conta comparações
+            comparacoes++;
 
             int resultado = strcmp(lista[j], busca);
-            dummy += resultado;  // impede otimização
+            dummy += resultado;
 
-            // só na primeira execução usa o resultado real
-            if (k == 0 && resultado == 0) {
-                encontrado = 1;
-                posicao = j;
-            }
+            if (resultado == 0) {
+                if (k == 0) {
+                    encontrado = 1;
+                    posicao = j;
+                }
+                break;
         }
     }
-
-    fim = clock();
-
-    double tempo_total = (double)(fim - inicio) / CLOCKS_PER_SEC;
-    double tempo_medio = tempo_total / REPETICOES;
 
     // Resultado da busca
     if (encontrado) {
@@ -90,18 +81,14 @@ int main() {
         printf("Filme nao encontrado\n");
     }
 
-    // Tempo
-    printf("Tempo total (%d buscas): %f segundos\n", REPETICOES, tempo_total);
-    printf("Tempo medio por busca: %f segundos\n", tempo_medio);
-
-    // Estatística real
+    // Estatística
     printf("Total de comparacoes: %lld\n", comparacoes);
-    printf("Media de comparacoes por busca: %lld\n", comparacoes / REPETICOES);
-
+    
     // Liberar memória
     for (int j = 0; j < total_filmes; j++) {
         free(lista[j]);
     }
 
     return 0;
+}
 }
